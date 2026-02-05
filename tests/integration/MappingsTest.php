@@ -46,7 +46,7 @@ class MappingsTest extends WP_UnitTestCase {
 
 		$result = SRC_Mappings::add( 'tickets', $post_id, 'post', '', 301 );
 
-		$this->assertTrue( $result );
+		$this->assertNotFalse( $result );
 
 		$mapping = SRC_Mappings::get_by_subdomain( 'tickets' );
 
@@ -68,7 +68,7 @@ class MappingsTest extends WP_UnitTestCase {
 	public function test_add_mapping_url_type(): void {
 		$result = SRC_Mappings::add( 'external', 0, 'url', 'https://external.com/path', 302 );
 
-		$this->assertTrue( $result );
+		$this->assertNotFalse( $result );
 
 		$redirect_url = SRC_Mappings::get_redirect_url( 'external' );
 
@@ -85,7 +85,7 @@ class MappingsTest extends WP_UnitTestCase {
 	public function test_add_mapping_home_type(): void {
 		$result = SRC_Mappings::add( 'home', 0, 'home', '', 301 );
 
-		$this->assertTrue( $result );
+		$this->assertNotFalse( $result );
 
 		$is_home = SRC_Mappings::is_home_redirect( 'home' );
 

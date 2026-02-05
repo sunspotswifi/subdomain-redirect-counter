@@ -23,6 +23,50 @@ if ( ! is_multisite() ) {
 }
 
 /**
+ * Check if a string is serialized data.
+ *
+ * This is a simplified version since WordPress's is_serialized() isn't available at sunrise.
+ *
+ * @param string $data The string to check.
+ * @return bool True if serialized, false otherwise.
+ */
+function src_sunrise_is_serialized( $data ): bool {
+	if ( ! is_string( $data ) ) {
+		return false;
+	}
+	$data = trim( $data );
+	if ( 'N;' === $data ) {
+		return true;
+	}
+	if ( strlen( $data ) < 4 ) {
+		return false;
+	}
+	if ( ':' !== $data[1] ) {
+		return false;
+	}
+	$lastc = substr( $data, -1 );
+	if ( ';' !== $lastc && '}' !== $lastc ) {
+		return false;
+	}
+	$token = $data[0];
+	switch ( $token ) {
+		case 's':
+			if ( '"' !== substr( $data, -2, 1 ) ) {
+				return false;
+			}
+			// Fall through.
+		case 'a':
+		case 'O':
+			return (bool) preg_match( "/^{$token}:[0-9]+:/s", $data );
+		case 'b':
+		case 'i':
+		case 'd':
+			return (bool) preg_match( "/^{$token}:[0-9.E+-]+;$/", $data );
+	}
+	return false;
+}
+
+/**
  * Handle domain redirects before WordPress multisite site lookup.
  *
  * This runs very early, before most WordPress functions are available.
@@ -35,7 +79,8 @@ function src_sunrise_handle_domain_redirect(): void {
 	$host = '';
 	if ( isset( $_SERVER['HTTP_HOST'] ) ) {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$host = strtolower( wp_unslash( $_SERVER['HTTP_HOST'] ) );
+		// Note: Using stripslashes() instead of wp_unslash() since WP functions aren't available at sunrise.
+		$host = strtolower( stripslashes( $_SERVER['HTTP_HOST'] ) );
 	}
 
 	// Remove port if present.
@@ -62,7 +107,9 @@ function src_sunrise_handle_domain_redirect(): void {
 		return;
 	}
 
-	$settings = maybe_unserialize( $settings_row );
+	// Note: Using native unserialize() instead of maybe_unserialize() since WP functions aren't available at sunrise.
+	// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize
+	$settings = src_sunrise_is_serialized( $settings_row ) ? @unserialize( $settings_row ) : $settings_row;
 
 	if ( ! is_array( $settings ) || empty( $settings['redirect_domains'] ) ) {
 		return;

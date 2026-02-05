@@ -83,6 +83,22 @@ class AdminSanitizeSettingsTest extends TestCase {
 	}
 
 	/**
+	 * Set up common mocks for sanitize_settings tests.
+	 *
+	 * @return void
+	 */
+	private function setUpSanitizeMocks(): void {
+		WP_Mock::userFunction( 'sanitize_key' )->andReturnUsing( function ( $k ) {
+			return strtolower( preg_replace( '/[^a-zA-Z0-9_\-]/', '', $k ) );
+		} );
+		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
+			return abs( intval( $v ) );
+		} );
+		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
+		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+	}
+
+	/**
 	 * Test enabled checkbox sanitization.
 	 *
 	 * @covers SRC_Admin::sanitize_settings
@@ -91,13 +107,7 @@ class AdminSanitizeSettingsTest extends TestCase {
 	public function test_sanitize_enabled_checkbox(): void {
 		$input = array( 'enabled' => '1' );
 
-		// Mock sanitize functions.
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+		$this->setUpSanitizeMocks();
 
 		$result = $this->admin->sanitize_settings( $input );
 
@@ -113,13 +123,7 @@ class AdminSanitizeSettingsTest extends TestCase {
 	public function test_sanitize_enabled_checkbox_false(): void {
 		$input = array();
 
-		// Mock sanitize functions.
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+		$this->setUpSanitizeMocks();
 
 		$result = $this->admin->sanitize_settings( $input );
 
@@ -135,12 +139,7 @@ class AdminSanitizeSettingsTest extends TestCase {
 	public function test_sanitize_logging_enabled_checkbox(): void {
 		$input = array( 'logging_enabled' => '1' );
 
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+		$this->setUpSanitizeMocks();
 
 		$result = $this->admin->sanitize_settings( $input );
 
@@ -156,14 +155,7 @@ class AdminSanitizeSettingsTest extends TestCase {
 	public function test_sanitize_excluded_subdomains_string(): void {
 		$input = array( 'excluded_subdomains' => 'www, mail, ftp' );
 
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnUsing( function ( $k ) {
-			return strtolower( $k );
-		} );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+		$this->setUpSanitizeMocks();
 
 		$result = $this->admin->sanitize_settings( $input );
 
@@ -182,18 +174,16 @@ class AdminSanitizeSettingsTest extends TestCase {
 	public function test_sanitize_log_retention_valid_values(): void {
 		$valid_values = array( 0, 7, 14, 30, 60, 90, 180, 365 );
 
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
-
 		foreach ( $valid_values as $value ) {
+			// Reset mocks for each iteration.
+			WP_Mock::tearDown();
+			WP_Mock::setUp();
+			$this->setUpSanitizeMocks();
+
 			$input  = array( 'log_retention_days' => $value );
 			$result = $this->admin->sanitize_settings( $input );
 
-			$this->assertEquals( $value, $result['log_retention_days'] );
+			$this->assertEquals( $value, $result['log_retention_days'], "Failed for value: $value" );
 		}
 	}
 
@@ -206,12 +196,7 @@ class AdminSanitizeSettingsTest extends TestCase {
 	public function test_sanitize_log_retention_invalid_defaults_zero(): void {
 		$input = array( 'log_retention_days' => 999 );
 
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+		$this->setUpSanitizeMocks();
 
 		$result = $this->admin->sanitize_settings( $input );
 
@@ -227,14 +212,12 @@ class AdminSanitizeSettingsTest extends TestCase {
 	public function test_sanitize_unmapped_behavior_valid_values(): void {
 		$valid_values = array( 'show', 'redirect' );
 
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
-
 		foreach ( $valid_values as $value ) {
+			// Reset mocks for each iteration.
+			WP_Mock::tearDown();
+			WP_Mock::setUp();
+			$this->setUpSanitizeMocks();
+
 			$input  = array( 'unmapped_behavior' => $value );
 			$result = $this->admin->sanitize_settings( $input );
 
@@ -251,12 +234,7 @@ class AdminSanitizeSettingsTest extends TestCase {
 	public function test_sanitize_unmapped_behavior_invalid_defaults_show(): void {
 		$input = array( 'unmapped_behavior' => 'invalid' );
 
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+		$this->setUpSanitizeMocks();
 
 		$result = $this->admin->sanitize_settings( $input );
 
@@ -272,12 +250,7 @@ class AdminSanitizeSettingsTest extends TestCase {
 	public function test_sanitize_aliased_domains_removes_protocol(): void {
 		$input = array( 'aliased_domains' => 'https://example.org' );
 
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+		$this->setUpSanitizeMocks();
 
 		$result = $this->admin->sanitize_settings( $input );
 
@@ -294,12 +267,7 @@ class AdminSanitizeSettingsTest extends TestCase {
 	public function test_sanitize_aliased_domains_removes_www(): void {
 		$input = array( 'aliased_domains' => 'www.example.org' );
 
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+		$this->setUpSanitizeMocks();
 
 		$result = $this->admin->sanitize_settings( $input );
 
@@ -323,12 +291,7 @@ class AdminSanitizeSettingsTest extends TestCase {
 			),
 		);
 
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+		$this->setUpSanitizeMocks();
 
 		$result = $this->admin->sanitize_settings( $input );
 
@@ -355,12 +318,7 @@ class AdminSanitizeSettingsTest extends TestCase {
 			),
 		);
 
-		WP_Mock::userFunction( 'sanitize_key' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'absint' )->andReturnUsing( function ( $v ) {
-			return absint( $v );
-		} );
-		WP_Mock::userFunction( 'sanitize_text_field' )->andReturnArg( 0 );
-		WP_Mock::userFunction( 'esc_url_raw' )->andReturnArg( 0 );
+		$this->setUpSanitizeMocks();
 
 		$result = $this->admin->sanitize_settings( $input );
 
