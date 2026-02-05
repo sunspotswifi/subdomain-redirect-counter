@@ -74,6 +74,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Subversion
+        run: sudo apt-get update && sudo apt-get install -y subversion
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -127,6 +130,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Subversion
+        run: sudo apt-get update && sudo apt-get install -y subversion
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -176,6 +182,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install Subversion
+        run: sudo apt-get update && sudo apt-get install -y subversion
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
