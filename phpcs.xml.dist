@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<ruleset name="Subdomain Redirect Counter">
+	<description>WordPress Coding Standards for Subdomain Redirect Counter plugin.</description>
+
+	<!-- What to scan -->
+	<file>.</file>
+
+	<!-- Exclude paths -->
+	<exclude-pattern>/vendor/*</exclude-pattern>
+	<exclude-pattern>/node_modules/*</exclude-pattern>
+	<exclude-pattern>/build/*</exclude-pattern>
+	<exclude-pattern>/dist/*</exclude-pattern>
+	<exclude-pattern>/scripts/*</exclude-pattern>
+
+	<!-- How to scan -->
+	<arg value="sp"/> <!-- Show sniff codes and progress -->
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg name="extensions" value="php"/>
+	<arg name="parallel" value="8"/>
+
+	<!-- Rules: Check PHP version compatibility -->
+	<config name="testVersion" value="8.0-"/>
+
+	<!-- Rules: WordPress Coding Standards -->
+	<rule ref="WordPress">
+		<!-- Allow short array syntax -->
+		<exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+	</rule>
+
+	<!-- Main plugin file is named after the plugin, not the class -->
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>subdomain-redirect-counter.php</exclude-pattern>
+	</rule>
+
+	<!-- Main plugin file has both class and function - standard WordPress pattern -->
+	<rule ref="Universal.Files.SeparateFunctionsFromOO.Mixed">
+		<exclude-pattern>subdomain-redirect-counter.php</exclude-pattern>
+	</rule>
+
+	<!-- Disable alignment warnings - causes issues with auto-fix -->
+	<rule ref="Generic.Formatting.MultipleStatementAlignment">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Rules: WordPress VIP compatibility (optional but good practice) -->
+	<rule ref="WordPress-Extra"/>
+
+	<!-- Verify that the text_domain is set to the desired text-domain -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="subdomain-redirect-counter"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!--
+		We allow both array() and [] syntax.
+		Generic.Arrays.DisallowShortArraySyntax is excluded above.
+		Generic.Arrays.DisallowLongArraySyntax is not included, so both are allowed.
+	-->
+
+	<!-- Verify function/method prefixing -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="src_"/>
+				<element value="SRC_"/>
+				<element value="Subdomain_Redirect_Counter"/>
+				<element value="subdomain_redirect_counter"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Minimum WordPress version -->
+	<config name="minimum_supported_wp_version" value="6.0"/>
+</ruleset>

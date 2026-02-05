@@ -1,0 +1,25 @@
+# Composer
+/vendor/
+composer.lock
+
+# Build artifacts
+/build/
+/dist/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+/coverage/
+coverage.xml
+.phpunit.result.cache
+
+# WordPress test environment
+/tmp/

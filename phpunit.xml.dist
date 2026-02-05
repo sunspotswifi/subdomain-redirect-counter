@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.6/phpunit.xsd"
+	bootstrap="tests/unit/bootstrap.php"
+	colors="true"
+	convertErrorsToExceptions="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true"
+	stopOnFailure="false"
+	beStrictAboutTestsThatDoNotTestAnything="true"
+>
+	<testsuites>
+		<testsuite name="Unit">
+			<directory suffix="Test.php">./tests/unit</directory>
+		</testsuite>
+	</testsuites>
+
+	<coverage processUncoveredFiles="true">
+		<include>
+			<directory suffix=".php">./includes</directory>
+			<directory suffix=".php">./admin</directory>
+			<file>./subdomain-redirect-counter.php</file>
+		</include>
+		<exclude>
+			<directory>./vendor</directory>
+			<directory>./tests</directory>
+			<directory>./build</directory>
+		</exclude>
+		<report>
+			<clover outputFile="coverage.xml"/>
+			<html outputDirectory="coverage/"/>
+		</report>
+	</coverage>
+
+	<php>
+		<const name="SRC_PLUGIN_DIR" value="./" />
+		<const name="SRC_VERSION" value="1.5.0" />
+	</php>
+</phpunit>

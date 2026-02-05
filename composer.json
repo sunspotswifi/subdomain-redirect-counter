@@ -1,0 +1,57 @@
+{
+	"name": "staarcon/subdomain-redirect-counter",
+	"description": "WordPress plugin that intercepts subdomain requests and redirects them to local permalinks while tracking statistics.",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"php": ">=8.0"
+	},
+	"require-dev": {
+		"php-stubs/wordpress-stubs": "^6.0",
+		"wp-coding-standards/wpcs": "^3.0",
+		"phpcompatibility/phpcompatibility-wp": "^2.1",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+		"phpunit/phpunit": "^9.6 || ^10.0",
+		"10up/wp_mock": "^1.0",
+		"wp-phpunit/wp-phpunit": "^6.0",
+		"yoast/phpunit-polyfills": "^2.0"
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"SRC\\Tests\\": "tests/"
+		}
+	},
+	"config": {
+		"platform": {
+			"php": "8.0"
+		},
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	},
+	"scripts": {
+		"lint": "phpcs",
+		"lint:fix": "phpcbf",
+		"compat": "phpcs -p --standard=PHPCompatibilityWP --runtime-set testVersion 8.0- --extensions=php .",
+		"test:unit": "phpunit --configuration phpunit.xml.dist",
+		"test:integration": "phpunit --configuration phpunit-integration.xml.dist",
+		"test": [
+			"@test:unit",
+			"@test:integration"
+		],
+		"coverage": "phpunit --configuration phpunit.xml.dist --coverage-html coverage/",
+		"build": "@php scripts/build.php",
+		"package": "@php scripts/package.php"
+	},
+	"scripts-descriptions": {
+		"lint": "Check code against WordPress coding standards",
+		"lint:fix": "Auto-fix coding standards issues",
+		"compat": "Check PHP compatibility",
+		"test:unit": "Run unit tests",
+		"test:integration": "Run integration tests",
+		"test": "Run all tests",
+		"coverage": "Generate code coverage report",
+		"build": "Build distribution-ready plugin",
+		"package": "Create plugin ZIP archive"
+	}
+}
