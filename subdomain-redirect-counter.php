@@ -98,6 +98,7 @@ final class Subdomain_Redirect_Counter {
 		add_action( 'wp_uninitialize_site', array( $this, 'on_site_deleted' ), 10, 1 );
 
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
+		add_action( 'plugins_loaded', array( $this, 'maybe_upgrade_db' ) );
 		add_action( 'init', array( $this, 'init' ), 1 );
 		add_action( 'src_log_rotation_cron', array( $this, 'run_log_rotation' ) );
 
@@ -108,6 +109,18 @@ final class Subdomain_Redirect_Counter {
 		// Network admin for multisite.
 		if ( is_multisite() && is_network_admin() ) {
 			SRC_Network_Admin::get_instance();
+		}
+	}
+
+	/**
+	 * Check if the database needs upgrading and run dbDelta if so.
+	 *
+	 * @return void
+	 */
+	public function maybe_upgrade_db(): void {
+		$installed_version = get_option( 'src_db_version', '0' );
+		if ( version_compare( $installed_version, SRC_Database::DB_VERSION, '<' ) ) {
+			SRC_Database::create_tables();
 		}
 	}
 
