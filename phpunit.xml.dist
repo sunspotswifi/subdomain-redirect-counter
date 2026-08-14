@@ -16,11 +16,12 @@
 		</testsuite>
 	</testsuites>
 
-	<coverage processUncoveredFiles="true">
+	<!-- processUncoveredFiles must stay false: it loads each included file
+	     standalone, and the plugin files call WordPress functions at load. -->
+	<coverage processUncoveredFiles="false">
 		<include>
 			<directory suffix=".php">./includes</directory>
 			<directory suffix=".php">./admin</directory>
-			<file>./subdomain-redirect-counter.php</file>
 		</include>
 		<exclude>
 			<directory>./vendor</directory>
@@ -35,6 +36,6 @@
 
 	<php>
 		<const name="SRC_PLUGIN_DIR" value="./" />
-		<const name="SRC_VERSION" value="1.5.0" />
+		<const name="SRC_VERSION" value="1.6.0" />
 	</php>
 </phpunit>
