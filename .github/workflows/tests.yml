@@ -50,7 +50,7 @@ jobs:
       fail-fast: false
       matrix:
         php: ['8.0', '8.1', '8.2']
-        wp: ['6.0', '6.3', '6.4', 'latest']
+        wp: ['6.2', '6.3', '6.4', 'latest']
         exclude:
           # WP 6.4+ requires PHP 7.0+ but works better with 8.0+
           - php: '8.0'

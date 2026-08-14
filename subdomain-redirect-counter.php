@@ -5,7 +5,7 @@
  * Description: Intercepts subdomain or alias domain requests and redirects them to local permalinks while tracking statistics.
  * Version: 1.6.0
  * Network: true
- * Requires at least: 6.0
+ * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author: John Gaudet
  * Author URI: https://cardandcraft.com

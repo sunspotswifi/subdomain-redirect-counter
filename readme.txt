@@ -1,7 +1,7 @@
 === Subdomain Redirect Counter ===
 Contributors: yourname
 Tags: subdomain, redirect, counter, statistics, SEO
-Requires at least: 6.0
+Requires at least: 6.2
 Tested up to: 6.7
 Requires PHP: 8.0
 Stable tag: 1.6.0
@@ -89,6 +89,7 @@ On the main site only. The sunrise.php handler runs before the requested site is
 == Changelog ==
 
 = 1.6.0 =
+* Requires WordPress 6.2+ (corrected from 6.0 — the plugin uses the %i identifier placeholder introduced in WordPress 6.2)
 * Added: automatic sunrise handler installation on multisite — the plugin writes an auto-updating loader to wp-content/sunrise.php on activation, and the settings page offers one-click setup that can also add the SUNRISE constant to wp-config.php (existing third-party sunrise.php files are never overwritten)
 * Fixed: "Keep path" and "Keep query string" options for domain redirects are now saved and honored consistently (previously the checkboxes were never persisted, and the non-sunrise redirect path ignored them)
 * Fixed: sunrise.php is now included in built release packages
