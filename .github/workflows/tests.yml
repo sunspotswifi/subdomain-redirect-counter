@@ -251,6 +251,7 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
 
+      # -q suppresses the progress output that phpcs.xml.dist enables (arg
+      # "sp"), which otherwise corrupts the checkstyle XML piped to cs2pr.
       - name: Check coding standards
-        run: vendor/bin/phpcs --report=checkstyle | cs2pr
-        continue-on-error: true
+        run: vendor/bin/phpcs -q --report=checkstyle | cs2pr
