@@ -30,12 +30,14 @@ class SRC_Statistics {
 
 		$table = SRC_Database::get_stats_table();
 
-		// Try to update existing record first.
+		// Try to update existing record first. target_path is refreshed so
+		// statistics reflect the currently configured target, not the first-ever one.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$updated = $wpdb->query(
 			$wpdb->prepare(
-				'UPDATE %i SET redirect_count = redirect_count + 1, last_redirect = %s WHERE subdomain = %s',
+				'UPDATE %i SET redirect_count = redirect_count + 1, target_path = %s, last_redirect = %s WHERE subdomain = %s',
 				$table,
+				$target_path,
 				current_time( 'mysql' ),
 				$subdomain
 			)

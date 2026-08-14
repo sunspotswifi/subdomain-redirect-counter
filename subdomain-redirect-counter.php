@@ -3,7 +3,7 @@
  * Plugin Name: Subdomain Redirect Counter
  * Plugin URI: https://example.com/subdomain-redirect-counter
  * Description: Intercepts subdomain or alias domain requests and redirects them to local permalinks while tracking statistics.
- * Version: 1.5.0
+ * Version: 1.6.0
  * Network: true
  * Requires at least: 6.0
  * Requires PHP: 8.0
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants.
-define( 'SRC_VERSION', '1.5.0' );
+define( 'SRC_VERSION', '1.6.0' );
 define( 'SRC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SRC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SRC_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -73,6 +73,7 @@ final class Subdomain_Redirect_Counter {
 		require_once SRC_PLUGIN_DIR . 'includes/class-src-statistics.php';
 		require_once SRC_PLUGIN_DIR . 'includes/class-src-logger.php';
 		require_once SRC_PLUGIN_DIR . 'includes/class-src-interceptor.php';
+		require_once SRC_PLUGIN_DIR . 'includes/class-src-sunrise-installer.php';
 
 		if ( is_admin() ) {
 			require_once SRC_PLUGIN_DIR . 'admin/class-src-admin.php';
@@ -135,6 +136,14 @@ final class Subdomain_Redirect_Counter {
 			$this->network_activate();
 		} else {
 			$this->single_site_activate();
+		}
+
+		// On multisite, write (or upgrade) the sunrise loader stub. This never
+		// touches wp-config.php — adding the SUNRISE constant requires the
+		// explicit button on the settings page. Failure is non-fatal; the
+		// settings page shows the install status.
+		if ( is_multisite() ) {
+			SRC_Sunrise_Installer::install_stub();
 		}
 	}
 
@@ -287,6 +296,12 @@ final class Subdomain_Redirect_Counter {
 	 * @return void
 	 */
 	public function on_new_site_created( WP_Site $new_site, array $args ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		// wp_initialize_site can fire outside wp-admin (wp-activate.php signups,
+		// WP-CLI, REST), where the plugin admin API is not loaded.
+		if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
 		// Only set up if plugin is network activated.
 		if ( ! is_plugin_active_for_network( SRC_PLUGIN_BASENAME ) ) {
 			return;

@@ -11,6 +11,8 @@
 	<exclude-pattern>/build/*</exclude-pattern>
 	<exclude-pattern>/dist/*</exclude-pattern>
 	<exclude-pattern>/scripts/*</exclude-pattern>
+	<!-- Test code is not shipped and uses PHPUnit/WP_Mock idioms WPCS flags. -->
+	<exclude-pattern>/tests/*</exclude-pattern>
 
 	<!-- How to scan -->
 	<arg value="sp"/> <!-- Show sniff codes and progress -->

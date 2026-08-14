@@ -302,6 +302,64 @@ class AdminSanitizeSettingsTest extends TestCase {
 	}
 
 	/**
+	 * Test redirect domains persist checked keep_path/keep_query flags.
+	 *
+	 * @covers SRC_Admin::sanitize_settings
+	 * @return void
+	 */
+	public function test_sanitize_redirect_domains_saves_keep_flags_checked(): void {
+		$input = array(
+			'redirect_domains' => array(
+				array(
+					'domain'        => 'example.org',
+					'target_url'    => 'https://example.com/',
+					'redirect_code' => 301,
+					'keep_path'     => '1',
+					'keep_query'    => '1',
+				),
+			),
+		);
+
+		$this->setUpSanitizeMocks();
+
+		$result = $this->admin->sanitize_settings( $input );
+
+		$this->assertTrue( $result['redirect_domains'][0]['keep_path'] );
+		$this->assertTrue( $result['redirect_domains'][0]['keep_query'] );
+	}
+
+	/**
+	 * Test redirect domains save unchecked keep flags as explicit false.
+	 *
+	 * Unchecked checkboxes are absent from the POST payload; the saved entry
+	 * must still contain both keys so downstream consumers can distinguish
+	 * "explicitly off" from "legacy entry without flags" (which defaults to on).
+	 *
+	 * @covers SRC_Admin::sanitize_settings
+	 * @return void
+	 */
+	public function test_sanitize_redirect_domains_saves_keep_flags_unchecked(): void {
+		$input = array(
+			'redirect_domains' => array(
+				array(
+					'domain'        => 'example.org',
+					'target_url'    => 'https://example.com/',
+					'redirect_code' => 301,
+				),
+			),
+		);
+
+		$this->setUpSanitizeMocks();
+
+		$result = $this->admin->sanitize_settings( $input );
+
+		$this->assertArrayHasKey( 'keep_path', $result['redirect_domains'][0] );
+		$this->assertArrayHasKey( 'keep_query', $result['redirect_domains'][0] );
+		$this->assertFalse( $result['redirect_domains'][0]['keep_path'] );
+		$this->assertFalse( $result['redirect_domains'][0]['keep_query'] );
+	}
+
+	/**
 	 * Test redirect domains skips entries with empty domain.
 	 *
 	 * @covers SRC_Admin::sanitize_settings
