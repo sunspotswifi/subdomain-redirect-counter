@@ -24,6 +24,7 @@ $include = array(
 	'includes',
 	'languages',
 	'subdomain-redirect-counter.php',
+	'sunrise.php',
 	'uninstall.php',
 	'readme.txt',
 	'LICENSE',

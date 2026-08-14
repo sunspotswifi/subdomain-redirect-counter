@@ -69,8 +69,9 @@ class SRC_Interceptor {
 
 			// Add canonical URL for SEO when showing content inline.
 			add_action( 'wp_head', array( $this, 'output_canonical_url' ), 1 );
-			add_filter( 'wpseo_canonical', array( $this, 'filter_yoast_canonical' ) );
-			add_filter( 'rank_math/frontend/canonical', array( $this, 'filter_yoast_canonical' ) );
+			add_filter( 'wpseo_canonical', array( $this, 'filter_seo_plugin_canonical' ) );
+			add_filter( 'rank_math/frontend/canonical', array( $this, 'filter_seo_plugin_canonical' ) );
+			add_filter( 'wds_filter_canonical', array( $this, 'filter_seo_plugin_canonical' ) );
 		}
 	}
 
@@ -124,6 +125,11 @@ class SRC_Interceptor {
 					$redirect_code = 301;
 				}
 
+				// Entries saved before 1.6.0 lack the keep flags; legacy behavior kept path and query.
+				// This logic must stay in sync with src_sunrise_handle_domain_redirect() in sunrise.php.
+				$keep_path  = array_key_exists( 'keep_path', $redirect ) ? ! empty( $redirect['keep_path'] ) : true;
+				$keep_query = array_key_exists( 'keep_query', $redirect ) ? ! empty( $redirect['keep_query'] ) : true;
+
 				// Build source URL for logging.
 				$scheme     = is_ssl() ? 'https' : 'http';
 				$request    = isset( $_SERVER['REQUEST_URI'] )
@@ -131,9 +137,21 @@ class SRC_Interceptor {
 					: '/';
 				$source_url = $scheme . '://' . $host . $request;
 
-				// Append the request path to target URL if not just redirecting to root.
-				if ( '/' !== $request && ! empty( $request ) ) {
-					$target_url = rtrim( $target_url, '/' ) . $request;
+				// Split the request into path and query so each can be kept independently.
+				$path  = wp_parse_url( $request, PHP_URL_PATH );
+				$path  = $path ? $path : '/';
+				$query = wp_parse_url( $request, PHP_URL_QUERY );
+				$query = $query ? $query : '';
+
+				// Append path if enabled and not just root.
+				if ( $keep_path && '/' !== $path ) {
+					$target_url = rtrim( $target_url, '/' ) . $path;
+				}
+
+				// Append query string if enabled.
+				if ( $keep_query && '' !== $query ) {
+					$separator   = ( false !== strpos( $target_url, '?' ) ) ? '&' : '?';
+					$target_url .= $separator . $query;
 				}
 
 				// Record statistics using the domain as the "subdomain" identifier.
@@ -491,6 +509,11 @@ class SRC_Interceptor {
 			}
 		}
 
+		// Content is served inline on the subdomain host. Prevent page caches
+		// (Hummingbird, host static caches) from storing it — a cached hit would
+		// bypass PHP entirely and statistics/logging would undercount.
+		nocache_headers();
+
 		// Record statistics.
 		SRC_Statistics::record_redirect( $this->subdomain, $target_path );
 
@@ -546,6 +569,13 @@ class SRC_Interceptor {
 			return;
 		}
 
+		// When an SEO plugin we integrate with is active, it outputs the canonical
+		// tag itself and we correct its value via filter — emitting our own tag too
+		// would produce duplicate <link rel="canonical"> elements.
+		if ( defined( 'WPSEO_VERSION' ) || class_exists( 'RankMath' ) || defined( 'SMARTCRAWL_VERSION' ) ) {
+			return;
+		}
+
 		$canonical_url = $this->get_canonical_url();
 
 		if ( $canonical_url ) {
@@ -557,12 +587,12 @@ class SRC_Interceptor {
 	}
 
 	/**
-	 * Filter Yoast SEO and Rank Math canonical URL.
+	 * Filter the canonical URL output by Yoast SEO, Rank Math, or SmartCrawl.
 	 *
 	 * @param string $canonical The current canonical URL.
 	 * @return string The filtered canonical URL.
 	 */
-	public function filter_yoast_canonical( string $canonical ): string {
+	public function filter_seo_plugin_canonical( string $canonical ): string {
 		if ( ! $this->subdomain ) {
 			return $canonical;
 		}

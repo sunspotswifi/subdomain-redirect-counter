@@ -49,6 +49,7 @@ class SRC_Admin {
 		add_action( 'admin_post_src_add_mapping', array( $this, 'handle_add_mapping' ) );
 		add_action( 'admin_post_src_edit_mapping', array( $this, 'handle_edit_mapping' ) );
 		add_action( 'admin_post_src_delete_mapping', array( $this, 'handle_delete_mapping' ) );
+		add_action( 'admin_post_src_install_sunrise', array( $this, 'handle_install_sunrise' ) );
 	}
 
 	/**
@@ -282,6 +283,8 @@ class SRC_Admin {
 						'domain'        => $domain,
 						'target_url'    => $target_url,
 						'redirect_code' => $redirect_code,
+						'keep_path'     => ! empty( $redirect['keep_path'] ),
+						'keep_query'    => ! empty( $redirect['keep_query'] ),
 					);
 				}
 			}
@@ -955,6 +958,8 @@ class SRC_Admin {
 					'domain'        => '',
 					'target_url'    => '',
 					'redirect_code' => 301,
+					'keep_path'     => true,
+					'keep_query'    => true,
 				),
 			);
 		}
@@ -963,17 +968,8 @@ class SRC_Admin {
 			<p class="description" style="margin-bottom: 10px;">
 				<?php esc_html_e( 'Redirect entire domains to another URL. Statistics and logging are recorded for these redirects.', 'subdomain-redirect-counter' ); ?>
 			</p>
-			<?php if ( is_multisite() && ( ! defined( 'SUNRISE' ) || ! SUNRISE ) ) : ?>
-				<div class="notice notice-warning inline" style="margin: 10px 0; max-width: 800px;">
-					<p>
-						<strong><?php esc_html_e( 'Multisite Notice:', 'subdomain-redirect-counter' ); ?></strong>
-						<?php esc_html_e( 'For domain redirects to work on multisite, you need to install sunrise.php:', 'subdomain-redirect-counter' ); ?>
-					</p>
-					<ol style="margin: 5px 0 5px 20px;">
-						<li><?php esc_html_e( 'Copy', 'subdomain-redirect-counter' ); ?> <code><?php echo esc_html( SRC_PLUGIN_DIR . 'sunrise.php' ); ?></code> <?php esc_html_e( 'to', 'subdomain-redirect-counter' ); ?> <code>wp-content/sunrise.php</code></li>
-						<li><?php esc_html_e( 'Add', 'subdomain-redirect-counter' ); ?> <code>define( 'SUNRISE', true );</code> <?php esc_html_e( 'to wp-config.php', 'subdomain-redirect-counter' ); ?></li>
-					</ol>
-				</div>
+			<?php if ( is_multisite() ) : ?>
+				<?php $this->render_sunrise_status(); ?>
 			<?php endif; ?>
 			<table class="widefat" style="max-width: 1000px;">
 				<thead>
@@ -1004,10 +1000,15 @@ class SRC_Admin {
 								</select>
 							</td>
 							<td style="text-align: center;">
-								<input type="checkbox" name="src_settings[redirect_domains][<?php echo esc_attr( $index ); ?>][keep_path]" value="1" <?php checked( ! empty( $redirect['keep_path'] ) ); ?>>
+								<?php
+								// Rows saved before 1.6.0 lack the keep flags; they behaved as "keep" so default to checked.
+								$keep_path_checked  = array_key_exists( 'keep_path', $redirect ) ? ! empty( $redirect['keep_path'] ) : true;
+								$keep_query_checked = array_key_exists( 'keep_query', $redirect ) ? ! empty( $redirect['keep_query'] ) : true;
+								?>
+								<input type="checkbox" name="src_settings[redirect_domains][<?php echo esc_attr( $index ); ?>][keep_path]" value="1" <?php checked( $keep_path_checked ); ?>>
 							</td>
 							<td style="text-align: center;">
-								<input type="checkbox" name="src_settings[redirect_domains][<?php echo esc_attr( $index ); ?>][keep_query]" value="1" <?php checked( ! empty( $redirect['keep_query'] ) ); ?>>
+								<input type="checkbox" name="src_settings[redirect_domains][<?php echo esc_attr( $index ); ?>][keep_query]" value="1" <?php checked( $keep_query_checked ); ?>>
 							</td>
 							<td>
 								<button type="button" class="button src-remove-redirect" title="<?php esc_attr_e( 'Remove', 'subdomain-redirect-counter' ); ?>">&times;</button>
@@ -1115,6 +1116,138 @@ class SRC_Admin {
 		})();
 		</script>
 		<?php
+	}
+
+	/**
+	 * Render the sunrise handler installation status and install button.
+	 *
+	 * Shown on multisite only: domain redirects need the sunrise handler to
+	 * fire before WordPress's site lookup.
+	 *
+	 * @return void
+	 */
+	private function render_sunrise_status(): void {
+		$status = SRC_Sunrise_Installer::get_status();
+
+		// Result message from a just-completed install action (display only).
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading a display-only result flag.
+		$result = isset( $_GET['src_sunrise'] ) ? sanitize_key( $_GET['src_sunrise'] ) : '';
+
+		if ( 'complete' === $result ) {
+			echo '<div class="notice notice-success inline" style="margin: 10px 0; max-width: 800px;"><p>';
+			esc_html_e( 'Sunrise handler installed. Domain redirects are now handled before WordPress site lookup.', 'subdomain-redirect-counter' );
+			echo '</p></div>';
+		} elseif ( 'stub_only' === $result ) {
+			echo '<div class="notice notice-warning inline" style="margin: 10px 0; max-width: 800px;"><p>';
+			esc_html_e( 'The sunrise loader was written, but wp-config.php could not be updated automatically. Add this line to wp-config.php (before the "That\'s all, stop editing!" comment):', 'subdomain-redirect-counter' );
+			echo '</p><p><code>define( \'SUNRISE\', true );</code></p></div>';
+		} elseif ( 'write_failed' === $result ) {
+			echo '<div class="notice notice-error inline" style="margin: 10px 0; max-width: 800px;"><p>';
+			esc_html_e( 'Could not write wp-content/sunrise.php. Check that wp-content is writable, or install manually.', 'subdomain-redirect-counter' );
+			echo '</p></div>';
+		}
+
+		// Fully installed with the auto-updating loader: show a quiet confirmation.
+		if ( 'current' === $status['stub'] && $status['sunrise_defined'] ) {
+			echo '<p class="description" style="margin-bottom: 10px;">';
+			esc_html_e( '✓ Sunrise handler active (auto-updating loader installed).', 'subdomain-redirect-counter' );
+			echo '</p>';
+			return;
+		}
+
+		// A sunrise.php from another plugin exists: manual merge required.
+		if ( 'foreign' === $status['stub'] ) {
+			?>
+			<div class="notice notice-warning inline" style="margin: 10px 0; max-width: 800px;">
+				<p>
+					<strong><?php esc_html_e( 'Multisite Notice:', 'subdomain-redirect-counter' ); ?></strong>
+					<?php esc_html_e( 'wp-content/sunrise.php already exists and belongs to another plugin. WordPress loads exactly one sunrise.php, so automatic installation is disabled. Append the contents of the file below to your existing wp-content/sunrise.php (this plugin\'s code returns early when no configured domain matches, so it is safe to run after another handler):', 'subdomain-redirect-counter' ); ?>
+				</p>
+				<p><code><?php echo esc_html( SRC_PLUGIN_DIR . 'sunrise.php' ); ?></code></p>
+			</div>
+			<?php
+			return;
+		}
+
+		// Installable states: missing, outdated, legacy manual copy, or loader
+		// present but the SUNRISE constant not yet defined.
+		if ( 'legacy_copy' === $status['stub'] ) {
+			$explanation = __( 'A manually copied sunrise handler was found. Upgrade it to the auto-updating loader so plugin updates apply without re-copying the file.', 'subdomain-redirect-counter' );
+			$button      = __( 'Upgrade sunrise handler', 'subdomain-redirect-counter' );
+		} elseif ( 'outdated' === $status['stub'] ) {
+			$explanation = __( 'The installed sunrise loader is outdated.', 'subdomain-redirect-counter' );
+			$button      = __( 'Update sunrise loader', 'subdomain-redirect-counter' );
+		} elseif ( 'current' === $status['stub'] ) {
+			$explanation = __( 'The sunrise loader is installed, but the SUNRISE constant is not defined in wp-config.php yet.', 'subdomain-redirect-counter' );
+			$button      = __( 'Finish installation', 'subdomain-redirect-counter' );
+		} else {
+			$explanation = __( 'For domain redirects to work on multisite, the sunrise handler must be installed.', 'subdomain-redirect-counter' );
+			$button      = __( 'Install sunrise handler', 'subdomain-redirect-counter' );
+		}
+
+		?>
+		<div class="notice notice-warning inline" style="margin: 10px 0; max-width: 800px;">
+			<p>
+				<strong><?php esc_html_e( 'Multisite Notice:', 'subdomain-redirect-counter' ); ?></strong>
+				<?php echo esc_html( $explanation ); ?>
+			</p>
+			<?php if ( current_user_can( 'manage_network_options' ) ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin: 5px 0 10px;">
+					<input type="hidden" name="action" value="src_install_sunrise">
+					<?php wp_nonce_field( 'src_install_sunrise', 'src_nonce' ); ?>
+					<button type="submit" class="button button-secondary"><?php echo esc_html( $button ); ?></button>
+					<span class="description" style="margin-left: 8px;">
+						<?php
+						if ( $status['sunrise_defined'] ) {
+							esc_html_e( 'Writes wp-content/sunrise.php.', 'subdomain-redirect-counter' );
+						} elseif ( $status['wp_config_writable'] ) {
+							esc_html_e( 'Writes wp-content/sunrise.php and adds the SUNRISE constant to wp-config.php.', 'subdomain-redirect-counter' );
+						} else {
+							esc_html_e( 'Writes wp-content/sunrise.php. wp-config.php is not writable — the SUNRISE constant must be added manually.', 'subdomain-redirect-counter' );
+						}
+						?>
+					</span>
+				</form>
+			<?php else : ?>
+				<ol style="margin: 5px 0 5px 20px;">
+					<li><?php esc_html_e( 'Copy', 'subdomain-redirect-counter' ); ?> <code><?php echo esc_html( SRC_PLUGIN_DIR . 'sunrise.php' ); ?></code> <?php esc_html_e( 'to', 'subdomain-redirect-counter' ); ?> <code>wp-content/sunrise.php</code></li>
+					<li><?php esc_html_e( 'Add', 'subdomain-redirect-counter' ); ?> <code>define( 'SUNRISE', true );</code> <?php esc_html_e( 'to wp-config.php', 'subdomain-redirect-counter' ); ?></li>
+				</ol>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Handle the sunrise handler install action.
+	 *
+	 * @return void
+	 */
+	public function handle_install_sunrise(): void {
+		if ( ! current_user_can( 'manage_network_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to perform this action.', 'subdomain-redirect-counter' ) );
+		}
+
+		check_admin_referer( 'src_install_sunrise', 'src_nonce' );
+
+		$result = SRC_Sunrise_Installer::install();
+
+		if ( is_wp_error( $result ) ) {
+			$code = 'src_sunrise_foreign' === $result->get_error_code() ? 'foreign' : 'write_failed';
+		} else {
+			$code = $result;
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'        => 'subdomain-redirect-counter-settings',
+					'src_sunrise' => $code,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
 	}
 
 	/**
