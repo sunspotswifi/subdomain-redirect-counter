@@ -3,7 +3,8 @@
  * Plugin Name: Subdomain Redirect Counter
  * Plugin URI: https://example.com/subdomain-redirect-counter
  * Description: Intercepts subdomain or alias domain requests and redirects them to local permalinks while tracking statistics.
- * Version: 1.6.0
+ * Version: 1.6.1
+ * Update URI: https://sunspotswifi.com/subdomain-redirect-counter
  * Network: true
  * Requires at least: 6.2
  * Requires PHP: 8.0
@@ -23,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants.
-define( 'SRC_VERSION', '1.6.0' );
+define( 'SRC_VERSION', '1.6.1' );
 define( 'SRC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SRC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SRC_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );

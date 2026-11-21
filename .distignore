@@ -1,0 +1,26 @@
+# Files left out of the plugin package (scripts/plugin-zip.sh in the workspace) and of the
+# deploy scripts. rsync exclude patterns; a leading / anchors to the plugin root.
+# The runtime is what scripts/build.php ships (admin, includes, languages, the main file, sunrise.php,
+# uninstall.php, readme.txt) plus LICENSE; everything else stays out.
+.git
+.gitignore
+.distignore
+/.github/
+/.vscode/
+/.claude/
+/.phpunit.result.cache
+/.phpunit.cache/
+/vendor/
+/bin/
+/docs/
+/scripts/
+/tests/
+/build/
+/dist/
+/coverage/
+/composer.json
+/composer.lock
+/phpcs.xml.dist
+/phpunit.xml.dist
+/phpunit-integration.xml.dist
+/LICENSES.md

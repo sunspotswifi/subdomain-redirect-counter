@@ -2,9 +2,9 @@
 Contributors: yourname
 Tags: subdomain, redirect, counter, statistics, SEO
 Requires at least: 6.2
-Tested up to: 6.7
+Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -87,6 +87,9 @@ On the main site only. The sunrise.php handler runs before the requested site is
 4. Detailed log viewer
 
 == Changelog ==
+
+= 1.6.1 =
+* Updates now come from the Plugin Depot (sunspotswifi.com) through Plugin Depot Client, with signed packages. No functional change.
 
 = 1.6.0 =
 * Requires WordPress 6.2+ (corrected from 6.0 — the plugin uses the %i identifier placeholder introduced in WordPress 6.2)
